@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المسبحة الإلكترونية</title>
+    <meta name="description" content="تطبيق مسبحة إلكترونية للصلاة مع تنبيهات الأذان">
+    <meta name="theme-color" content="#2C5364">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="مسبحة">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <!-- ===== AdMob Script ===== -->
+    <!-- غيّر ca-app-pub-3940256099942544 بمعرف حسابك الحقيقي -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-3940256099942544" crossorigin="anonymous"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #0F2027;
+            --primary-light: #2C5364;
+            --accent-gold: #FFD700;
+            --accent-orange: #FF6B00;
+            --text-light: #FFFFFF;
+            --text-dark: #1a1a1a;
+            --bg-light: #f5f5f5;
+            --bg-light-secondary: #e8e8e8;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        body.light-theme {
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-light-secondary) 100%);
+            color: var(--text-dark);
+        }
+
+        /* نجوم متحركة */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        body.light-theme .container {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        .page-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        body.light-theme .page-tabs {
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        body.light-theme .tab-btn {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* صفحة التسبيح الرئيسية */
+        .tasbih-page {
+            text-align: center;
+        }
+
+        .azkar-display {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--accent-gold);
+            min-height: 40px;
+        }
+
+        .counter-section {
+            margin-bottom: 40px;
+        }
+
+        .hizb-counter {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+        }
+
+        body.light-theme .hizb-counter {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .counter-display {
+            font-size: 140px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+            line-height: 1;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .counter-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+        }
+
+        body.light-theme .counter-label {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .tasbih-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #FF8C00 0%, var(--accent-orange) 50%, #CC5500 100%);
+            border: 4px solid rgba(255, 215, 0, 0.4);
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 0 auto 40px;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 40px rgba(255, 107, 0, 0.5), 0 0 60px rgba(255, 107, 0, 0.2), inset -3px -3px 8px rgba(0, 0, 0, 0.3), inset 3px 3px 8px rgba(255, 255, 255, 0.2);
+            font-family: 'Cairo', sans-serif;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tasbih-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 5px 20px rgba(255, 107, 0, 0.4), inset -2px -2px 5px rgba(0, 0, 0, 0.3), inset 2px 2px 5px rgba(255, 255, 255, 0.1);
+        }
+
+        .tasbih-button:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 10px 40px rgba(255, 107, 0, 0.4), inset -2px -2px 5px rgba(0, 0, 0, 0.2), inset 2px 2px 5px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+                box-shadow: 0 15px 50px rgba(255, 107, 0, 0.6), inset -2px -2px 5px rgba(0, 0, 0, 0.2), inset 2px 2px 5px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        .tasbih-button.pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--text-dark);
+        }
+
+        .btn-primary:hover {
+            background: #FFC700;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        body.light-theme .btn-secondary {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text-dark);
+            border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        body.light-theme .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* صفحة الإحصائيات */
+        .stats-page {
+            text-align: center;
+        }
+
+        .stat-card {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        body.light-theme .stat-card {
+            background: rgba(255, 215, 0, 0.05);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+        }
+
+        body.light-theme .stat-label {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+
+        .adhan-settings {
+            margin-top: 30px;
+        }
+
+        .adhan-btn {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .adhan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .adhan-btn.active {
+            background: linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%);
+        }
+
+        .prayer-times {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: right;
+        }
+
+        body.light-theme .prayer-times {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .prayer-time-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 14px;
+            margin-bottom: 10px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .prayer-time-item:hover {
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .prayer-time-item span {
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        body.light-theme .prayer-time-item {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        body.light-theme .prayer-time-item span {
+            color: #B8860B;
+            text-shadow: none;
+        }
+
+        .prayer-time-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .prayer-time-input {
+            width: 90px;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            border-radius: 8px;
+            background: rgba(255, 215, 0, 0.1);
+            color: #FFD700;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+
+        body.light-theme .prayer-time-input {
+            background: rgba(255, 215, 0, 0.15);
+            color: #B8860B;
+            border: 1px solid rgba(184, 134, 11, 0.4);
+            text-shadow: none;
+        }
+
+        .prayer-time-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.light-theme .prayer-time-input::placeholder {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* الرسائل والتنبيهات */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-gold);
+            color: var(--text-dark);
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .notification.hide {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        /* استجابة الجوال */
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+                border-radius: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .counter-display {
+                font-size: 100px;
+            }
+
+            .tasbih-button {
+                width: 160px;
+                height: 160px;
+                font-size: 20px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>المسبحة الإلكترونية</h1>
+            <button class="theme-toggle" id="themeToggle">🌙</button>
+        </div>
+
+        <div class="page-tabs">
+            <button class="tab-btn active" data-tab="tasbih">التسبيح</button>
+            <button class="tab-btn" data-tab="stats">الإحصائيات</button>
+            <button class="tab-btn" data-tab="adhan">الأذان</button>
+        </div>
+
+        <!-- صفحة التسبيح -->
+        <div class="page tasbih-page active" id="tasbih">
+            <div class="azkar-display" id="azkarDisplay">سبحان الله</div>
+            <div class="counter-section">
+                <div class="hizb-counter" id="hizbCounter">الختمة رقم: 1</div>
+                <div class="counter-display" id="counter">0</div>
+                <div class="counter-label">عدد التسبيحات</div>
+            </div>
+
+            <button class="tasbih-button" id="tasbihBtn">
+                <span style="font-size:40px; display:block; margin-bottom:5px;">📿</span>
+                <span>سبّح</span>
+            </button>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="resetBtn">إعادة</button>
+                <button class="btn btn-secondary" id="undoBtn">رجوع 1</button>
+                <button class="btn btn-primary" id="saveBtn">حفظ</button>
+            </div>
+        </div>
+
+        <!-- صفحة الإحصائيات -->
+        <div class="page stats-page" id="stats">
+            <div class="stat-card">
+                <div class="stat-label">اليوم</div>
+                <div class="stat-value" id="todayStats">0</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">هذا الأسبوع</div>
+                <div class="stat-value" id="weekStats">0</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">الإجمالي</div>
+                <div class="stat-value" id="totalStats">0</div>
+            </div>
+
+        </div>
+
+        <!-- صفحة الأذان -->
+        <div class="page stats-page" id="adhan">
+            <div class="adhan-settings">
+                <button class="adhan-btn" id="adhanToggle">🔔 تفعيل تنبيهات الأذان</button>
+                
+                <h3 style="margin-top:20px; margin-bottom:10px; color:var(--accent-gold); font-size:20px;">أوقات الصلاة</h3>
+                <div class="prayer-times" id="prayerTimesContainer" style="display:block;">
+                    <div class="prayer-time-item">
+                        <input type="time" class="prayer-time-input" id="fajrTime" value="05:00">
+                        <span>🌙 الفجر</span>
+                    </div>
+                    <div class="prayer-time-item">
+                        <input type="time" class="prayer-time-input" id="dhuhrTime" value="14:00">
+                        <span>☀️ الظهر</span>
+                    </div>
+                    <div class="prayer-time-item">
+                        <input type="time" class="prayer-time-input" id="asrTime" value="16:30">
+                        <span>🌤️ العصر</span>
+                    </div>
+                    <div class="prayer-time-item">
+                        <input type="time" class="prayer-time-input" id="maghribTime" value="19:00">
+                        <span>🌅 المغرب</span>
+                    </div>
+                    <div class="prayer-time-item">
+                        <input type="time" class="prayer-time-input" id="ishaTime" value="20:30">
+                        <span>🌃 العشاء</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== متغيرات عامة =====
+        let counter = 0;
+        let hizbCount = 1;
+        let currentAzkar = 0;
+        let adhanEnabled = false;
+        let lastAdhanTime = {};
+
+        const azkar = [
+            { text: 'سبحان الله', count: 33 },
+            { text: 'الحمد لله', count: 33 },
+            { text: 'الله أكبر', count: 34 },
+            { text: 'استغفر الله', count: 0 }
+        ];
+
+        const prayerNames = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const prayerArabicNames = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
+
+        // ===== تهيئة النجوم =====
+        function initStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = Math.floor(window.innerWidth / 50);
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // ===== تحميل البيانات من localStorage =====
+        function loadData() {
+            const saved = localStorage.getItem('tasbihData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                counter = data.counter || 0;
+                hizbCount = data.hizbCount || 1;
+                currentAzkar = data.currentAzkar || 0;
+            }
+            updateDisplay();
+        }
+
+        // ===== حفظ البيانات =====
+        function saveData() {
+            const today = new Date().toDateString();
+            const stats = JSON.parse(localStorage.getItem('tasbihStats') || '{}');
+            
+            if (!stats[today]) {
+                stats[today] = 0;
+            }
+            stats[today] += counter;
+            
+            localStorage.setItem('tasbihStats', JSON.stringify(stats));
+            localStorage.setItem('tasbihData', JSON.stringify({
+                counter: 0,
+                hizbCount: hizbCount,
+                currentAzkar: currentAzkar
+            }));
+
+            showNotification('✓ تم حفظ البيانات بنجاح');
+            counter = 0;
+            updateDisplay();
+        }
+
+        // ===== تحديث العرض =====
+        function updateDisplay() {
+            document.getElementById('counter').textContent = counter;
+            document.getElementById('azkarDisplay').textContent = azkar[currentAzkar].text;
+            document.getElementById('hizbCounter').textContent = `الختمة رقم: ${hizbCount}`;
+            updateStats();
+        }
+
+        // ===== زيادة العداد =====
+        function increment() {
+            counter++;
+            playSound();
+            vibrate();
+            
+            // حفظ كل ضغطة مباشرة في الإحصائيات
+            saveClickToStats();
+            
+            const btn = document.getElementById('tasbihBtn');
+            btn.classList.remove('pulse');
+            void btn.offsetWidth;
+            btn.classList.add('pulse');
+
+            // التحقق من انتهاء الذكر الحالي
+            const currentCount = azkar[currentAzkar].count;
+            if (currentCount > 0 && counter >= currentCount) {
+                nextAzkar();
+            }
+
+            // التحقق من انتهاء الختمة
+            if (counter >= 100) {
+                hizbCount++;
+                counter = 0;
+                showNotification('🎉 انتهيت من ختمة! ابدأ ختمة جديدة');
+                // عرض إعلان Interstitial عند كل ختمة
+                showInterstitialAd();
+            }
+
+            updateDisplay();
+        }
+
+        // ===== حفظ كل ضغطة مباشرة =====
+        function saveClickToStats() {
+            const today = new Date().toDateString();
+            const stats = JSON.parse(localStorage.getItem('tasbihStats') || '{}');
+            stats[today] = (stats[today] || 0) + 1;
+            localStorage.setItem('tasbihStats', JSON.stringify(stats));
+        }
+
+        // ===== الانتقال للذكر التالي =====
+        function nextAzkar() {
+            currentAzkar = (currentAzkar + 1) % azkar.length;
+            counter = 0;
+            updateDisplay();
+            showNotification(`✨ ${azkar[currentAzkar].text}`);
+        }
+
+        // ===== تشغيل الصوت =====
+        function playSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // ===== الاهتزاز =====
+        function vibrate() {
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+
+        // ===== إعادة تعيين =====
+        function reset() {
+            if (confirm('هل تريد إعادة تعيين العداد؟')) {
+                counter = 0;
+                currentAzkar = 0;
+                updateDisplay();
+                showNotification('تم إعادة تعيين العداد');
+            }
+        }
+
+        // ===== رجوع واحد =====
+        function undo() {
+            if (counter > 0) {
+                counter--;
+                updateDisplay();
+                showNotification('تم الرجوع واحد');
+            }
+        }
+
+        // ===== تحديث الإحصائيات =====
+        function updateStats() {
+            const today = new Date().toDateString();
+            const stats = JSON.parse(localStorage.getItem('tasbihStats') || '{}');
+            
+            let todayCount = stats[today] || 0;
+            let weekCount = 0;
+            let totalCount = 0;
+            
+            const now = new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toDateString();
+                weekCount += stats[dateStr] || 0;
+            }
+            
+            Object.values(stats).forEach(val => totalCount += val);
+            
+            document.getElementById('todayStats').textContent = todayCount;
+            document.getElementById('weekStats').textContent = weekCount;
+            document.getElementById('totalStats').textContent = totalCount;
+        }
+
+        // ===== إظهار الإشعارات =====
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('hide');
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+
+        // ===== تبديل الثيم =====
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+            updateThemeButton();
+        }
+
+        function updateThemeButton() {
+            const btn = document.getElementById('themeToggle');
+            btn.textContent = document.body.classList.contains('light-theme') ? '☀️' : '🌙';
+        }
+
+        // ===== تحميل الثيم المحفوظ =====
+        function loadTheme() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+            updateThemeButton();
+        }
+
+        // ===== إدارة التبويبات =====
+        function setupTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
+        }
+
+        // ===== إدارة الأذان =====
+        let adhanCheckerStarted = false;
+
+        function setupAdhan() {
+            const adhanToggle = document.getElementById('adhanToggle');
+            
+            // تحميل حالة الأذان المحفوظة
+            adhanEnabled = localStorage.getItem('adhanEnabled') === 'true';
+            updateAdhanButton();
+            
+            adhanToggle.addEventListener('click', () => {
+                if (!adhanEnabled) {
+                    // طلب صلاحية الإشعارات
+                    if ('Notification' in window) {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                adhanEnabled = true;
+                                localStorage.setItem('adhanEnabled', 'true');
+                                updateAdhanButton();
+                                if (!adhanCheckerStarted) {
+                                    startAdhanChecker();
+                                    adhanCheckerStarted = true;
+                                }
+                                showNotification('✅ تم تفعيل تنبيهات الأذان');
+                            } else {
+                                showNotification('⚠️ يرجى السماح بالإشعارات لتفعيل الأذان');
+                            }
+                        });
+                    } else {
+                        showNotification('⚠️ المتصفح لا يدعم الإشعارات');
+                    }
+                } else {
+                    adhanEnabled = false;
+                    localStorage.setItem('adhanEnabled', 'false');
+                    updateAdhanButton();
+                    showNotification('🔕 تم إيقاف تنبيهات الأذان');
+                }
+            });
+
+            // إذا كان الأذان مفعلاً مسبقاً، شغّل المراقب
+            if (adhanEnabled) {
+                if (!adhanCheckerStarted) {
+                    startAdhanChecker();
+                    adhanCheckerStarted = true;
+                }
+            }
+
+            // حفظ أوقات الصلاة عند التغيير
+            prayerNames.forEach(name => {
+                const input = document.getElementById(name + 'Time');
+                input.addEventListener('change', () => {
+                    localStorage.setItem(name + 'Time', input.value);
+                });
+                
+                // تحميل الوقت المحفوظ
+                const saved = localStorage.getItem(name + 'Time');
+                if (saved) {
+                    input.value = saved;
+                }
+            });
+        }
+
+        function updateAdhanButton() {
+            const btn = document.getElementById('adhanToggle');
+            if (adhanEnabled) {
+                btn.textContent = '🔔 تنبيهات الأذان مفعلة';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = '🔔 تفعيل تنبيهات الأذان';
+                btn.classList.remove('active');
+            }
+        }
+
+        function startAdhanChecker() {
+            setInterval(() => {
+                if (!adhanEnabled) return;
+                
+                const now = new Date();
+                const currentTime = String(now.getHours()).padStart(2, '0') + ':' + 
+                                   String(now.getMinutes()).padStart(2, '0');
+                
+                prayerNames.forEach((name, index) => {
+                    const input = document.getElementById(name + 'Time');
+                    const prayerTime = input.value;
+                    
+                    if (prayerTime === currentTime && !lastAdhanTime[name]) {
+                        lastAdhanTime[name] = true;
+                        playAdhan(prayerArabicNames[index]);
+                        
+                        // إعادة تعيين بعد دقيقة
+                        setTimeout(() => {
+                            lastAdhanTime[name] = false;
+                        }, 60000);
+                    }
+                });
+            }, 10000);
+        }
+
+        function playAdhan(prayerName) {
+            // إرسال إشعار
+            if (Notification.permission === 'granted') {
+                new Notification('🕌 حان وقت صلاة ' + prayerName, {
+                    body: 'حيّ على الصلاة - حان وقت صلاة ' + prayerName,
+                    tag: 'adhan-' + prayerName,
+                    requireInteraction: true
+                });
+            }
+            
+            // إظهار تنبيه داخل التطبيق
+            showNotification('🕌 حان وقت صلاة ' + prayerName);
+
+            // تشغيل صوت الأذان MP3
+            playAdhanSound();
+        }
+
+        function playAdhanSound() {
+            const adhanAudio = new Audio('https://download.tvquran.com/download/selections/315/5.mp3');
+            adhanAudio.volume = 0.8;
+            adhanAudio.play().catch(err => {
+                // إذا ما اشتغل الملف الخارجي، شغّل صوت بديل
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [
+                    { freq: 440, duration: 0.8 },
+                    { freq: 494, duration: 0.8 },
+                    { freq: 523, duration: 1.2 },
+                    { freq: 587, duration: 0.8 },
+                    { freq: 523, duration: 1.2 }
+                ];
+                let time = audioContext.currentTime;
+                notes.forEach(note => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.frequency.value = note.freq;
+                    gain.gain.setValueAtTime(0.4, time);
+                    gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+                    osc.start(time);
+                    osc.stop(time + note.duration);
+                    time += note.duration;
+                });
+            });
+        }
+
+        // ===== التهيئة =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initStars();
+            loadTheme();
+            loadData();
+            setupTabs();
+            setupAdhan();
+            
+            // ربط الأزرار
+            document.getElementById('tasbihBtn').addEventListener('click', increment);
+            document.getElementById('resetBtn').addEventListener('click', reset);
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('saveBtn').addEventListener('click', saveData);
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // تحديث الإحصائيات كل دقيقة
+            setInterval(updateStats, 60000);
+        });
+
+        // حفظ البيانات عند مغادرة الصفحة
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('tasbihData', JSON.stringify({
+                counter: counter,
+                hizbCount: hizbCount,
+                currentAzkar: currentAzkar
+            }));
+        });
+
+        // ===== تسجيل Service Worker =====
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker تم تسجيله', reg.scope))
+                .catch(err => console.log('Service Worker فشل', err));
+        }
+    </script>
+    <!-- ===== AdMob Banner - ثابت أسفل الشاشة ===== -->
+    <!-- غيّر data-ad-slot بمعرف إعلانك الحقيقي -->
+    <div id="ad-banner" style="position:fixed; bottom:0; left:0; right:0; z-index:9999; text-align:center; background:rgba(0,0,0,0.8); padding:5px 0;">
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:320px;height:50px"
+             data-ad-client="ca-app-pub-3940256099942544"
+             data-ad-slot="6300978111"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <script>
+    // ===== AdMob Interstitial =====
+    // معرف الإعلان التجريبي - غيّره بمعرفك الحقيقي
+    const INTERSTITIAL_AD_SLOT = 'ca-app-pub-3940256099942544/1033173712';
+    
+    function showInterstitialAd() {
+        // إنشاء إعلان Interstitial
+        const adContainer = document.createElement('div');
+        adContainer.id = 'interstitial-ad';
+        adContainer.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; z-index:99999; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center;';
+        
+        // زر إغلاق
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ إغلاق';
+        closeBtn.style.cssText = 'position:absolute; top:20px; right:20px; background:#FFD700; color:#000; border:none; padding:10px 20px; border-radius:8px; font-size:16px; font-family:Cairo; cursor:pointer; z-index:100000;';
+        closeBtn.onclick = () => adContainer.remove();
+        
+        // محتوى الإعلان
+        const adContent = document.createElement('div');
+        adContent.innerHTML = '<ins class="adsbygoogle" style="display:block; width:300px; height:250px;" data-ad-client="ca-app-pub-3940256099942544" data-ad-slot="1033173712" data-ad-format="auto"></ins>';
+        
+        adContainer.appendChild(closeBtn);
+        adContainer.appendChild(adContent);
+        document.body.appendChild(adContainer);
+        
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        } catch(e) {
+            console.log('AdMob Interstitial error:', e);
+        }
+        
+        // إغلاق تلقائي بعد 5 ثواني
+        setTimeout(() => {
+            if (document.getElementById('interstitial-ad')) {
+                adContainer.remove();
+            }
+        }, 5000);
+    }
+    </script>
+</body>
+</html>
